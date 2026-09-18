@@ -83,10 +83,42 @@ fn plan(args: &ScaffoldArgs) -> Result<Vec<PlannedFile>> {
     service.service_port = args.port;
     service.target_port = args.port;
 
+    // Ingress and HPA are opt-in, so they are only added to the base when asked
+    // for -- and only then do they appear in the base kustomization.
+    let mut resources = vec!["deployment.yaml".to_string(), "service.yaml".to_string()];
+    let mut manifests = Vec::new();
+
+    if let Some(host) = &args.ingress_host {
+        let mut ingress = GenContext::new(&args.name);
+        ingress.host = host.clone();
+        ingress.ingress_class = args.ingress_class.clone();
+        ingress.tls_secret = args.ingress_tls_secret.clone();
+        ingress.service_port = args.port;
+
+        resources.push("ingress.yaml".to_string());
+        manifests.push(PlannedFile {
+            path: base.join("ingress.yaml"),
+            content: generate::render(GenKind::Ingress, &ingress)?,
+        });
+    }
+
+    if args.hpa {
+        let mut hpa = GenContext::new(&args.name);
+        hpa.min_replicas = args.hpa_min;
+        hpa.max_replicas = args.hpa_max;
+        hpa.target_cpu = args.hpa_cpu;
+
+        resources.push("hpa.yaml".to_string());
+        manifests.push(PlannedFile {
+            path: base.join("hpa.yaml"),
+            content: generate::render(GenKind::Hpa, &hpa)?,
+        });
+    }
+
     let base_kustomization = KustomizationBaseTpl {
         ctx: &KustomizeBaseContext {
             name: args.name.clone(),
-            resources: vec!["deployment.yaml".to_string(), "service.yaml".to_string()],
+            resources,
         },
     }
     .render()?;
@@ -103,11 +135,12 @@ fn plan(args: &ScaffoldArgs) -> Result<Vec<PlannedFile>> {
             path: base.join("service.yaml"),
             content: generate::render(GenKind::Service, &service)?,
         },
-        PlannedFile {
-            path: base.join("kustomization.yaml"),
-            content: util::ensure_trailing_newline(base_kustomization),
-        },
     ];
+    files.extend(manifests);
+    files.push(PlannedFile {
+        path: base.join("kustomization.yaml"),
+        content: util::ensure_trailing_newline(base_kustomization),
+    });
 
     for env in &args.envs {
         let overlay = KustomizationOverlayTpl {

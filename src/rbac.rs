@@ -164,7 +164,7 @@ pub fn render_bundle(args: &RbacBundleArgs) -> Result<String> {
         name: args.name.clone(),
         namespace: Some(args.namespace.clone()),
         no_automount: args.no_automount,
-        image_pull_secrets: Vec::new(),
+        image_pull_secrets: args.image_pull_secrets.clone(),
         output: None,
         force: false,
     };

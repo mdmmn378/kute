@@ -521,3 +521,232 @@ fn search_with_no_matches_is_not_an_error() {
     assert!(output.status.success());
     assert_eq!(stdout(&output).trim(), "");
 }
+
+// ── completions ─────────────────────────────────────────────────────────────
+
+#[test]
+fn completions_are_generated_for_every_supported_shell() {
+    for shell in ["bash", "zsh", "fish", "powershell", "elvish"] {
+        let output = kute(&["completions", shell]);
+        assert!(
+            output.status.success(),
+            "`completions {shell}` failed: {}",
+            stderr(&output)
+        );
+
+        let script = stdout(&output);
+        assert!(
+            script.contains("kute"),
+            "the {shell} script should reference the binary name"
+        );
+        assert!(
+            script.len() > 100,
+            "the {shell} script looks empty ({} bytes)",
+            script.len()
+        );
+    }
+}
+
+#[test]
+fn completion_scripts_cover_the_subcommands() {
+    let script = stdout(&kute(&["completions", "bash"]));
+
+    for subcommand in [
+        "gen",
+        "scaffold",
+        "rbac",
+        "search",
+        "ctx",
+        "tui",
+        "completions",
+    ] {
+        assert!(
+            script.contains(subcommand),
+            "`{subcommand}` is missing from the generated completions"
+        );
+    }
+}
+
+#[test]
+fn an_unknown_shell_is_rejected() {
+    let output = kute(&["completions", "cmd.exe"]);
+    assert!(!output.status.success());
+}
+
+// ── scaffold: optional ingress and hpa ──────────────────────────────────────
+
+/// Read the `resources:` list from a generated base kustomization.
+fn base_resources(dir: &std::path::Path, app: &str) -> Vec<String> {
+    let text = fs::read_to_string(dir.join(app).join("base/kustomization.yaml")).unwrap();
+    parse_documents(&text)[0]["resources"]
+        .as_sequence()
+        .unwrap()
+        .iter()
+        .map(|value| value.as_str().unwrap().to_string())
+        .collect()
+}
+
+#[test]
+fn scaffold_omits_ingress_and_hpa_by_default() {
+    let dir = scratch("scaffold-plain");
+
+    let output = kute(&["scaffold", "web", "--dir", dir.to_str().unwrap()]);
+    assert!(output.status.success(), "{}", stderr(&output));
+
+    let base = dir.join("web/base");
+    assert!(!base.join("ingress.yaml").exists());
+    assert!(!base.join("hpa.yaml").exists());
+
+    assert_eq!(
+        base_resources(&dir, "web"),
+        vec!["deployment.yaml", "service.yaml"]
+    );
+}
+
+#[test]
+fn scaffold_can_add_an_ingress() {
+    let dir = scratch("scaffold-ingress");
+
+    let output = kute(&[
+        "scaffold",
+        "web",
+        "--dir",
+        dir.to_str().unwrap(),
+        "--ingress-host",
+        "app.example.com",
+        "--ingress-class",
+        "nginx",
+        "--ingress-tls-secret",
+        "web-tls",
+        "--port",
+        "8080",
+    ]);
+    assert!(output.status.success(), "{}", stderr(&output));
+
+    let base = dir.join("web/base");
+    let documents = parse_documents(&fs::read_to_string(base.join("ingress.yaml")).unwrap());
+    let ingress = &documents[0];
+
+    assert_eq!(ingress["kind"], "Ingress");
+    assert_eq!(ingress["spec"]["ingressClassName"], "nginx");
+    assert_eq!(ingress["spec"]["rules"][0]["host"], "app.example.com");
+    assert_eq!(ingress["spec"]["tls"][0]["secretName"], "web-tls");
+
+    // The backend must point at the Service this scaffold just wrote, on the
+    // port it was given -- otherwise the ingress routes nowhere.
+    let backend = &ingress["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"];
+    assert_eq!(backend["name"], "web");
+    assert_eq!(backend["port"]["number"], 8080);
+
+    assert!(
+        base_resources(&dir, "web").contains(&"ingress.yaml".to_string()),
+        "ingress.yaml must be listed in the base kustomization"
+    );
+}
+
+#[test]
+fn scaffold_can_add_an_hpa() {
+    let dir = scratch("scaffold-hpa");
+
+    let output = kute(&[
+        "scaffold",
+        "web",
+        "--dir",
+        dir.to_str().unwrap(),
+        "--hpa",
+        "--hpa-min",
+        "3",
+        "--hpa-max",
+        "25",
+        "--hpa-cpu",
+        "70",
+    ]);
+    assert!(output.status.success(), "{}", stderr(&output));
+
+    let base = dir.join("web/base");
+    let documents = parse_documents(&fs::read_to_string(base.join("hpa.yaml")).unwrap());
+    let hpa = &documents[0];
+
+    assert_eq!(hpa["kind"], "HorizontalPodAutoscaler");
+    assert_eq!(hpa["spec"]["scaleTargetRef"]["name"], "web");
+    assert_eq!(hpa["spec"]["minReplicas"], 3);
+    assert_eq!(hpa["spec"]["maxReplicas"], 25);
+    assert_eq!(
+        hpa["spec"]["metrics"][0]["resource"]["target"]["averageUtilization"],
+        70
+    );
+
+    assert!(
+        base_resources(&dir, "web").contains(&"hpa.yaml".to_string()),
+        "hpa.yaml must be listed in the base kustomization"
+    );
+}
+
+#[test]
+fn scaffold_can_add_ingress_and_hpa_together() {
+    let dir = scratch("scaffold-both");
+
+    let output = kute(&[
+        "scaffold",
+        "web",
+        "--dir",
+        dir.to_str().unwrap(),
+        "--ingress-host",
+        "app.example.com",
+        "--hpa",
+    ]);
+    assert!(output.status.success(), "{}", stderr(&output));
+
+    let base = dir.join("web/base");
+    assert!(base.join("ingress.yaml").exists());
+    assert!(base.join("hpa.yaml").exists());
+
+    assert_eq!(
+        base_resources(&dir, "web"),
+        vec![
+            "deployment.yaml",
+            "service.yaml",
+            "ingress.yaml",
+            "hpa.yaml"
+        ]
+    );
+}
+
+#[test]
+fn ingress_class_without_a_host_is_rejected() {
+    let dir = scratch("scaffold-bad-ingress");
+    let output = kute(&[
+        "scaffold",
+        "web",
+        "--dir",
+        dir.to_str().unwrap(),
+        "--ingress-class",
+        "nginx",
+    ]);
+    assert!(!output.status.success());
+    assert!(stderr(&output).contains("ingress-host"));
+}
+
+#[test]
+fn rbac_bundle_carries_image_pull_secrets_and_automount() {
+    let output = kute(&[
+        "rbac",
+        "bundle",
+        "reader",
+        "-n",
+        "prod",
+        "-r",
+        "get:pods",
+        "--image-pull-secret",
+        "regcred",
+        "--no-automount",
+    ]);
+    assert!(output.status.success(), "{}", stderr(&output));
+
+    let documents = parse_documents(&stdout(&output));
+    let service_account = &documents[0];
+
+    assert_eq!(service_account["kind"], "ServiceAccount");
+    assert_eq!(service_account["imagePullSecrets"][0]["name"], "regcred");
+    assert_eq!(service_account["automountServiceAccountToken"], false);
+}

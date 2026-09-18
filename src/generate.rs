@@ -230,7 +230,7 @@ fn add_volume(ctx: &mut GenContext, source: &str, mount_path: &str, kind: &str, 
 }
 
 /// Volume names must be valid DNS-1123 labels.
-fn sanitize_volume_name(source: &str) -> String {
+pub fn sanitize_volume_name(source: &str) -> String {
     source
         .chars()
         .map(|c| match c {

@@ -9,7 +9,7 @@ use crate::util;
 #[command(
     name = "kute",
     version,
-    about = "A holistic Kubernetes helper: manifests, kustomize scaffolding, RBAC and fuzzy kubectl search",
+    about = "kute (Kubernetes Template Engine): generate manifests, scaffold kustomize trees, build RBAC and fuzzy-find kubectl commands",
     long_about = None,
     propagate_version = true,
     disable_help_subcommand = true
@@ -33,6 +33,15 @@ pub enum Command {
     Ctx(CtxArgs),
     /// Launch the interactive TUI
     Tui(TuiArgs),
+    /// Print a shell completion script
+    Completions(CompletionsArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct CompletionsArgs {
+    /// Shell to generate completions for
+    #[arg(value_enum)]
+    pub shell: clap_complete::Shell,
 }
 
 #[derive(Args, Debug)]
@@ -270,6 +279,34 @@ pub struct ScaffoldArgs {
     #[arg(long)]
     pub tag: Option<String>,
 
+    /// Also generate an Ingress in the base for this host
+    #[arg(long, value_name = "HOST")]
+    pub ingress_host: Option<String>,
+
+    /// Ingress class name (implies --ingress-host)
+    #[arg(long, requires = "ingress_host")]
+    pub ingress_class: Option<String>,
+
+    /// TLS secret name for the ingress (implies --ingress-host)
+    #[arg(long, requires = "ingress_host")]
+    pub ingress_tls_secret: Option<String>,
+
+    /// Also generate a HorizontalPodAutoscaler in the base
+    #[arg(long)]
+    pub hpa: bool,
+
+    /// HPA minimum replicas
+    #[arg(long, default_value_t = 2)]
+    pub hpa_min: u32,
+
+    /// HPA maximum replicas
+    #[arg(long, default_value_t = 10)]
+    pub hpa_max: u32,
+
+    /// HPA target average CPU utilisation
+    #[arg(long, default_value_t = 80)]
+    pub hpa_cpu: u32,
+
     /// Print the tree instead of writing it
     #[arg(long)]
     pub dry_run: bool,
@@ -398,6 +435,10 @@ pub struct RbacBundleArgs {
     /// Do not automount the service account token
     #[arg(long)]
     pub no_automount: bool,
+
+    /// imagePullSecret for the generated ServiceAccount, may be repeated
+    #[arg(long = "image-pull-secret")]
+    pub image_pull_secrets: Vec<String>,
 
     #[arg(short, long)]
     pub output: Option<PathBuf>,

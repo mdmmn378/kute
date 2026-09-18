@@ -10,7 +10,7 @@ mod snippets;
 mod tui;
 mod util;
 
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 
 use crate::cli::{Cli, Command};
 
@@ -22,5 +22,10 @@ fn main() -> anyhow::Result<()> {
         Command::Search(args) => search::run(args),
         Command::Ctx(args) => ctx::run(args),
         Command::Tui(args) => tui::run(args),
+        Command::Completions(args) => {
+            let mut command = Cli::command();
+            clap_complete::generate(args.shell, &mut command, "kute", &mut std::io::stdout());
+            Ok(())
+        }
     }
 }

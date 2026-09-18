@@ -2,7 +2,7 @@
 name = "kute"
 version = "0.1.0"
 edition = "2024"
-description = "A holistic Kubernetes helper: manifest generation, kustomize scaffolding, RBAC builders and fuzzy kubectl search"
+description = "kute (Kubernetes Template Engine): manifest generation, kustomize scaffolding, RBAC builders and fuzzy kubectl search"
 license = "MIT"
 keywords = ["kubernetes", "kubectl", "kustomize", "cli", "tui"]
 categories = ["command-line-utilities", "development-tools"]
@@ -11,6 +11,7 @@ categories = ["command-line-utilities", "development-tools"]
 anyhow = "1.0.104"
 askama = "0.16.1"
 clap = { version = "4.6.7", features = ["derive"] }
+clap_complete = "4.6.11"
 dirs = "7.0.0"
 fuzzy-matcher = "0.3.7"
 ratatui = "0.30.2"
