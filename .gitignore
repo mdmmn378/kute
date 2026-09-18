@@ -1,1 +1,4 @@
 /target
+
+# Local Command Code state (settings, learned taste preferences)
+/.commandcode/
