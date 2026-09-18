@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+{% include "_meta.yaml" %}
+spec:
+  backoffLimit: {{ backoff_limit }}
+{%- if let Some(c) = completions %}
+  completions: {{ c }}
+{%- endif %}
+{%- if let Some(p) = parallelism %}
+  parallelism: {{ p }}
+{%- endif %}
+{%- if suspend %}
+  suspend: true
+{%- endif %}
+  template:
+{% include "_podmeta.yaml" %}
+    spec:
+      restartPolicy: {{ restart_policy }}
+{%- if let Some(sa) = service_account %}
+      serviceAccountName: {{ sa }}
+{%- endif %}
+{% include "_workload_container.yaml" %}
+{%- if !volumes.is_empty() %}
+{% include "_volumes.yaml" %}
+{%- endif %}

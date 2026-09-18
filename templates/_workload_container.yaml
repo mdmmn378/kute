@@ -1,0 +1,27 @@
+      containers:
+        - name: {{ container_name }}
+          image: {{ image }}
+          imagePullPolicy: {{ image_pull_policy }}
+          ports:
+            - name: {{ port_name }}
+              containerPort: {{ port }}
+              protocol: TCP
+{%- if !command.is_empty() %}
+          command:
+{%- for c in command %}
+            - "{{ c }}"
+{%- endfor %}
+{%- endif %}
+{%- if !args.is_empty() %}
+          args:
+{%- for a in args %}
+            - "{{ a }}"
+{%- endfor %}
+{%- endif %}
+{%- if !env.is_empty() %}
+{% include "_container_env.yaml" %}
+{%- endif %}
+{% include "_container_resources.yaml" %}
+{%- if !mounts.is_empty() %}
+{% include "_volume_mounts.yaml" %}
+{%- endif %}

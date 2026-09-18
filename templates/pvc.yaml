@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+{% include "_meta.yaml" %}
+spec:
+  accessModes:
+    - {{ access_mode }}
+  resources:
+    requests:
+      storage: "{{ storage }}"
+{%- if let Some(sc) = storage_class %}
+  storageClassName: {{ sc }}
+{%- endif %}

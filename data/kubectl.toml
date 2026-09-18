@@ -1,0 +1,672 @@
+# kute's built-in kubectl example corpus.
+#
+# Add your own entries here and they are compiled into the binary.
+# Fields: cmd (required), desc (required), tags, category.
+
+# ── Inspecting workloads ────────────────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl get pods -A -o wide"
+desc = "List every pod in every namespace with node and pod IP"
+tags = ["pods", "list", "all-namespaces"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS -o wide --sort-by=.metadata.creationTimestamp"
+desc = "List pods newest last, with node placement"
+tags = ["pods", "list", "sort"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS --field-selector=status.phase=Running"
+desc = "Show only running pods in a namespace"
+tags = ["pods", "filter", "field-selector"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS --field-selector=status.phase!=Running"
+desc = "Find pods that are NOT running (pending, failed, crashing)"
+tags = ["pods", "filter", "pending"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS --show-labels"
+desc = "List pods with all their labels inline"
+tags = ["pods", "labels"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS -l app=NAME -o jsonpath='{.items[*].status.podIP}'"
+desc = "Extract pod IPs for a label selector"
+tags = ["pods", "jsonpath", "ip"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl get all -n NS"
+desc = "Show every common resource in a namespace in one shot"
+tags = ["all", "overview"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl get deploy,sts,ds,rs -n NS"
+desc = "Show all workload controllers at once"
+tags = ["deploy", "statefulset", "daemonset", "replicaset"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS -o custom-columns=NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName,RESTARTS:.status.containerStatuses[0].restartCount"
+desc = "Compact custom-columns pod table including restart counts"
+tags = ["pods", "custom-columns", "restarts"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl get events -n NS --sort-by=.lastTimestamp"
+desc = "Show namespace events in chronological order"
+tags = ["events", "debug"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp"
+desc = "Show only warning events across the cluster"
+tags = ["events", "warning", "debug"]
+category = "troubleshoot"
+
+# ── Describing and debugging ────────────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl describe pod -n NS POD"
+desc = "Full pod detail: events, mounts, probes, conditions"
+tags = ["describe", "pod", "debug"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl describe node NODE | grep -A10 'Allocated resources'"
+desc = "Show a node's CPU/memory requests and limits"
+tags = ["describe", "node", "capacity"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl get pod -n NS POD -o yaml"
+desc = "Dump the live pod spec and status as YAML"
+tags = ["get", "yaml", "pod"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl get pod -n NS POD -o jsonpath='{.spec.containers[*].image}'"
+desc = "Show exactly which images a running pod uses"
+tags = ["image", "jsonpath", "pod"]
+category = "inspect"
+
+[[snippet]]
+cmd = "kubectl logs -n NS POD --previous"
+desc = "Logs from the previous instance of a crashed container"
+tags = ["logs", "previous", "crashloop"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl logs -n NS POD -c CONTAINER --tail=100 -f"
+desc = "Follow the last 100 lines of a specific container"
+tags = ["logs", "follow", "tail"]
+category = "logs"
+
+[[snippet]]
+cmd = "kubectl logs -n NS -l app=NAME --prefix --tail=50"
+desc = "Aggregate logs from every pod matching a label"
+tags = ["logs", "aggregate", "label", "prefix"]
+category = "logs"
+
+[[snippet]]
+cmd = "kubectl logs -n NS POD --since=10m"
+desc = "Show only the last 10 minutes of logs"
+tags = ["logs", "since", "time"]
+category = "logs"
+
+[[snippet]]
+cmd = "kubectl logs -n NS -l app=NAME --all-containers --ignore-errors"
+desc = "Tolerant multi-pod, multi-container log tail"
+tags = ["logs", "all-containers", "multi"]
+category = "logs"
+
+[[snippet]]
+cmd = "kubectl get pod -n NS POD -o jsonpath='{.status.containerStatuses[*].state}'"
+desc = "Inspect container state (waiting, terminated, reason)"
+tags = ["jsonpath", "status", "crashloop"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl debug -it -n NS POD --image=busybox --target=CONTAINER"
+desc = "Attach an ephemeral debug container with the target's namespaces"
+tags = ["debug", "ephemeral", "distroless"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl debug node/NODE -it --image=busybox"
+desc = "Start a privileged debug pod on a node, host root mounted at /host"
+tags = ["debug", "node", "host"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl run tmp-shell --rm -it --restart=Never --image=nicolaka/netshoot"
+desc = "Throwaway network troubleshooting pod with a full toolset"
+tags = ["debug", "network", "netshoot", "shell"]
+category = "troubleshoot"
+
+# ── Exec and file transfer ──────────────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl exec -it -n NS POD -- /bin/sh"
+desc = "Open an interactive shell in a pod"
+tags = ["exec", "shell", "interactive"]
+category = "exec"
+
+[[snippet]]
+cmd = "kubectl exec -n NS POD -- env | sort"
+desc = "Print a container's environment variables sorted"
+tags = ["exec", "env", "config"]
+category = "exec"
+
+[[snippet]]
+cmd = "kubectl exec -n NS POD -- cat /etc/config/app.yaml"
+desc = "Read a file from inside a container"
+tags = ["exec", "cat", "configmap"]
+category = "exec"
+
+[[snippet]]
+cmd = "kubectl cp NS/POD:/var/log/app.log ./app.log"
+desc = "Copy a file out of a pod"
+tags = ["cp", "copy", "download"]
+category = "exec"
+
+[[snippet]]
+cmd = "kubectl cp ./config.yaml NS/POD:/etc/app/config.yaml"
+desc = "Copy a local file into a pod"
+tags = ["cp", "copy", "upload"]
+category = "exec"
+
+[[snippet]]
+cmd = "kubectl exec -n NS POD -- sh -c 'pgrep -a java || ps aux'"
+desc = "Find the main process inside a container"
+tags = ["exec", "process", "ps"]
+category = "exec"
+
+# ── Applying, diffing and pruning ───────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl apply -f manifest.yaml --dry-run=server"
+desc = "Server-side dry run to validate against admission and CRDs"
+tags = ["apply", "dry-run", "validate"]
+category = "apply"
+
+[[snippet]]
+cmd = "kubectl diff -f manifest.yaml"
+desc = "Show what apply would change before you apply it"
+tags = ["diff", "apply", "review"]
+category = "apply"
+
+[[snippet]]
+cmd = "kubectl apply -k overlays/prod"
+desc = "Apply a kustomize overlay"
+tags = ["kustomize", "apply", "overlay"]
+category = "apply"
+
+[[snippet]]
+cmd = "kubectl kustomize overlays/prod"
+desc = "Render a kustomize overlay to stdout without applying"
+tags = ["kustomize", "render", "preview"]
+category = "apply"
+
+[[snippet]]
+cmd = "kubectl apply -f manifest.yaml --server-side --force-conflicts"
+desc = "Server-side apply, resolving field manager conflicts"
+tags = ["apply", "server-side", "conflict"]
+category = "apply"
+
+[[snippet]]
+cmd = "kubectl create configmap NAME --from-file=config.yaml --dry-run=client -o yaml"
+desc = "Generate a ConfigMap manifest from a file without applying"
+tags = ["configmap", "create", "generate"]
+category = "apply"
+
+[[snippet]]
+cmd = "kubectl create secret generic NAME --from-literal=KEY=VALUE --dry-run=client -o yaml"
+desc = "Generate a Secret manifest without committing it to the cluster"
+tags = ["secret", "create", "generate"]
+category = "apply"
+
+[[snippet]]
+cmd = "kubectl create secret docker-registry NAME --docker-server=REG --docker-username=U --docker-password=P"
+desc = "Create an image pull secret for a private registry"
+tags = ["secret", "docker-registry", "imagepull"]
+category = "apply"
+
+[[snippet]]
+cmd = "kubectl delete -f manifest.yaml --ignore-not-found"
+desc = "Delete everything in a manifest, tolerating missing objects"
+tags = ["delete", "ignore-not-found"]
+category = "apply"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS --no-headers -o custom-columns=:metadata.name | xargs -r kubectl delete pod -n NS"
+desc = "Delete every pod in a namespace (forces a rollout restart)"
+tags = ["delete", "pods", "xargs", "restart"]
+category = "apply"
+
+# ── Rollouts and scaling ────────────────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl rollout status deploy/NAME -n NS --timeout=120s"
+desc = "Block until a deployment finishes rolling out"
+tags = ["rollout", "status", "deploy"]
+category = "rollout"
+
+[[snippet]]
+cmd = "kubectl rollout restart deploy/NAME -n NS"
+desc = "Restart a deployment without changing its spec"
+tags = ["rollout", "restart", "deploy"]
+category = "rollout"
+
+[[snippet]]
+cmd = "kubectl rollout undo deploy/NAME -n NS"
+desc = "Roll back a deployment to the previous revision"
+tags = ["rollout", "undo", "rollback"]
+category = "rollout"
+
+[[snippet]]
+cmd = "kubectl rollout history deploy/NAME -n NS --revision=2"
+desc = "Inspect what changed in a specific deployment revision"
+tags = ["rollout", "history", "revision"]
+category = "rollout"
+
+[[snippet]]
+cmd = "kubectl rollout pause deploy/NAME -n NS"
+desc = "Pause a rollout so you can batch several spec changes"
+tags = ["rollout", "pause", "canary"]
+category = "rollout"
+
+[[snippet]]
+cmd = "kubectl set image deploy/NAME -n NS CONTAINER=IMAGE:TAG"
+desc = "Update a container image imperatively"
+tags = ["set", "image", "deploy"]
+category = "rollout"
+
+[[snippet]]
+cmd = "kubectl scale deploy/NAME -n NS --replicas=5"
+desc = "Scale a deployment up or down"
+tags = ["scale", "replicas", "deploy"]
+category = "rollout"
+
+[[snippet]]
+cmd = "kubectl autoscale deploy/NAME -n NS --min=2 --max=10 --cpu-percent=80"
+desc = "Create an HPA based on CPU utilisation"
+tags = ["autoscale", "hpa", "cpu"]
+category = "rollout"
+
+# ── Services and networking ─────────────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl get svc,endpoints -n NS"
+desc = "Show services next to their populated endpoints"
+tags = ["service", "endpoints", "network"]
+category = "network"
+
+[[snippet]]
+cmd = "kubectl get endpointslices -n NS -o wide"
+desc = "Modern endpoint inspection with readiness info"
+tags = ["endpointslices", "service", "readiness"]
+category = "network"
+
+[[snippet]]
+cmd = "kubectl port-forward -n NS svc/NAME 8080:80"
+desc = "Tunnel a service to localhost:8080"
+tags = ["port-forward", "service", "tunnel"]
+category = "network"
+
+[[snippet]]
+cmd = "kubectl port-forward -n NS pod/POD 5432:5432"
+desc = "Tunnel directly to a pod (e.g. a database)"
+tags = ["port-forward", "pod", "database"]
+category = "network"
+
+[[snippet]]
+cmd = "kubectl run nettest --rm -it --image=nicolaka/netshoot -- nslookup NAME.NS.svc.cluster.local"
+desc = "Verify DNS resolution inside the cluster"
+tags = ["dns", "nslookup", "network"]
+category = "network"
+
+[[snippet]]
+cmd = "kubectl run nettest --rm -it --image=nicolaka/netshoot -- curl -sv http://NAME.NS.svc.cluster.local"
+desc = "Check HTTP reachability between services"
+tags = ["curl", "connectivity", "network"]
+category = "network"
+
+[[snippet]]
+cmd = "kubectl get ingress -A"
+desc = "List all ingress rules across the cluster"
+tags = ["ingress", "list", "network"]
+category = "network"
+
+[[snippet]]
+cmd = "kubectl describe ingress NAME -n NS"
+desc = "Show ingress rules, backends and address"
+tags = ["ingress", "describe"]
+category = "network"
+
+[[snippet]]
+cmd = "kubectl get networkpolicy -n NS"
+desc = "List network policies in a namespace"
+tags = ["networkpolicy", "list", "security"]
+category = "network"
+
+# ── Nodes, capacity and scheduling ──────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl top nodes"
+desc = "Live CPU and memory usage per node"
+tags = ["top", "nodes", "metrics"]
+category = "capacity"
+
+[[snippet]]
+cmd = "kubectl top pods -n NS --sort-by=memory"
+desc = "Memory-hungry pods first; needs metrics-server"
+tags = ["top", "pods", "memory"]
+category = "capacity"
+
+[[snippet]]
+cmd = "kubectl describe node NODE | grep -E 'Taints|Unschedulable'"
+desc = "Check whether a node is cordoned or tainted"
+tags = ["node", "taint", "cordon"]
+category = "capacity"
+
+[[snippet]]
+cmd = "kubectl cordon NODE"
+desc = "Mark a node unschedulable before maintenance"
+tags = ["cordon", "node", "maintenance"]
+category = "capacity"
+
+[[snippet]]
+cmd = "kubectl drain NODE --ignore-daemonsets --delete-emptydir-data"
+desc = "Evict all workload from a node for maintenance"
+tags = ["drain", "node", "maintenance"]
+category = "capacity"
+
+[[snippet]]
+cmd = "kubectl uncordon NODE"
+desc = "Return a node to the schedulable pool"
+tags = ["uncordon", "node", "maintenance"]
+category = "capacity"
+
+[[snippet]]
+cmd = "kubectl get pods -A -o json | jq -r '.items[] | select(.status.phase == \"Pending\") | .metadata.name'"
+desc = "Find all pending pods and their names"
+tags = ["pending", "jq", "scheduling"]
+category = "capacity"
+
+# ── RBAC and security ───────────────────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl auth can-i --list -n NS"
+desc = "Show everything you are allowed to do in a namespace"
+tags = ["auth", "rbac", "permissions"]
+category = "security"
+
+[[snippet]]
+cmd = "kubectl auth can-i get pods --as=system:serviceaccount:NS:SA"
+desc = "Impersonate a ServiceAccount and test one permission"
+tags = ["auth", "impersonate", "serviceaccount"]
+category = "security"
+
+[[snippet]]
+cmd = "kubectl auth can-i create deployments --as=system:serviceaccount:NS:SA -n NS"
+desc = "Check whether a ServiceAccount can create deployments"
+tags = ["auth", "serviceaccount", "rbac"]
+category = "security"
+
+[[snippet]]
+cmd = "kubectl get role,rolebinding -n NS"
+desc = "List namespaced RBAC objects"
+tags = ["rbac", "role", "rolebinding"]
+category = "security"
+
+[[snippet]]
+cmd = "kubectl get clusterrole,clusterrolebinding"
+desc = "List cluster-scoped RBAC objects"
+tags = ["rbac", "clusterrole", "clusterrolebinding"]
+category = "security"
+
+[[snippet]]
+cmd = "kubectl describe clusterrolebinding NAME"
+desc = "Inspect which subjects a cluster role binding grants to"
+tags = ["rbac", "describe", "clusterrolebinding"]
+category = "security"
+
+[[snippet]]
+cmd = "kubectl whoami"
+desc = "Print the identity currently used against the API server"
+tags = ["auth", "whoami", "identity"]
+category = "security"
+
+[[snippet]]
+cmd = "kubectl get secrets -n NS -o jsonpath='{.items[*].metadata.name}'"
+desc = "List secret names without exposing their contents"
+tags = ["secret", "list", "security"]
+category = "security"
+
+[[snippet]]
+cmd = "kubectl get secret NAME -n NS -o jsonpath='{.data.KEY}' | base64 -d"
+desc = "Decode one key from a Secret"
+tags = ["secret", "base64", "decode"]
+category = "security"
+
+# ── Storage ─────────────────────────────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl get pvc -n NS"
+desc = "List persistent volume claims and their bound volumes"
+tags = ["pvc", "storage", "list"]
+category = "storage"
+
+[[snippet]]
+cmd = "kubectl get pv"
+desc = "List cluster-wide persistent volumes and reclaim policies"
+tags = ["pv", "storage", "list"]
+category = "storage"
+
+[[snippet]]
+cmd = "kubectl get storageclass"
+desc = "List available storage classes and default markers"
+tags = ["storageclass", "storage", "default"]
+category = "storage"
+
+[[snippet]]
+cmd = "kubectl describe pvc NAME -n NS"
+desc = "Diagnose a PVC stuck in Pending"
+tags = ["pvc", "describe", "pending"]
+category = "storage"
+
+# ── Jobs, cronjobs and batch ────────────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl get jobs -n NS -o wide"
+desc = "List jobs with completion status and duration"
+tags = ["jobs", "batch", "list"]
+category = "batch"
+
+[[snippet]]
+cmd = "kubectl get cronjobs -n NS"
+desc = "List cronjobs with schedule, suspend and last run"
+tags = ["cronjob", "schedule", "list"]
+category = "batch"
+
+[[snippet]]
+cmd = "kubectl create job --from=cronjob/NAME MANUAL-RUN -n NS"
+desc = "Trigger a cronjob immediately for testing"
+tags = ["cronjob", "manual", "trigger"]
+category = "batch"
+
+[[snippet]]
+cmd = "kubectl logs -n NS job/NAME"
+desc = "Read the logs of a job's pod"
+tags = ["job", "logs", "batch"]
+category = "batch"
+
+[[snippet]]
+cmd = "kubectl delete job NAME -n NS --cascade=foreground"
+desc = "Delete a job and wait for its pods to go away"
+tags = ["job", "delete", "cascade"]
+category = "batch"
+
+# ── Context, config and API discovery ───────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl config get-contexts"
+desc = "List every kubeconfig context with its cluster and namespace"
+tags = ["context", "config", "list"]
+category = "context"
+
+[[snippet]]
+cmd = "kubectl config current-context"
+desc = "Print the context you are talking to right now"
+tags = ["context", "current", "config"]
+category = "context"
+
+[[snippet]]
+cmd = "kubectl config use-context CONTEXT"
+desc = "Switch the active context"
+tags = ["context", "switch", "config"]
+category = "context"
+
+[[snippet]]
+cmd = "kubectl config set-context --current --namespace=NS"
+desc = "Pin a default namespace onto the current context"
+tags = ["context", "namespace", "config"]
+category = "context"
+
+[[snippet]]
+cmd = "kubectl api-resources --verbs=list --namespaced -o name"
+desc = "Enumerate every namespaced resource type the cluster knows"
+tags = ["api-resources", "discovery", "crd"]
+category = "context"
+
+[[snippet]]
+cmd = "kubectl api-resources --api-group=apps"
+desc = "List resources in a specific API group"
+tags = ["api-resources", "api-group", "discovery"]
+category = "context"
+
+[[snippet]]
+cmd = "kubectl explain deploy.spec.strategy --recursive"
+desc = "Read field documentation straight from the OpenAPI schema"
+tags = ["explain", "docs", "schema"]
+category = "context"
+
+[[snippet]]
+cmd = "kubectl get --raw /healthz"
+desc = "Hit the API server health endpoint directly"
+tags = ["raw", "healthz", "health"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl get --raw /readyz?verbose"
+desc = "Detailed readiness breakdown of every API server check"
+tags = ["raw", "readyz", "health"]
+category = "troubleshoot"
+
+[[snippet]]
+cmd = "kubectl cluster-info"
+desc = "Show the control plane endpoints"
+tags = ["cluster-info", "control-plane"]
+category = "context"
+
+[[snippet]]
+cmd = "kubectl version -o yaml"
+desc = "Show client and server versions together"
+tags = ["version", "upgrade"]
+category = "context"
+
+[[snippet]]
+cmd = "kubectl get componentstatuses"
+desc = "Legacy control-plane component health check"
+tags = ["componentstatuses", "health", "control-plane"]
+category = "troubleshoot"
+
+# ── Output shaping and automation ───────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl get pods -n NS -o jsonpath='{range .items[*]}{.metadata.name}{\"\\t\"}{.status.phase}{\"\\n\"}{end}'"
+desc = "Tab-separated name/phase table via jsonpath ranges"
+tags = ["jsonpath", "range", "format"]
+category = "output"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS -o name"
+desc = "Print only resource/name pairs, ideal for piping"
+tags = ["name", "pipe", "format"]
+category = "output"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS -o yaml > pods.yaml"
+desc = "Snapshot live objects to a file"
+tags = ["yaml", "export", "backup"]
+category = "output"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS -l app=NAME -o json | jq -r '.items[].metadata.name'"
+desc = "Use jq to extract names from a JSON list"
+tags = ["jq", "json", "extract"]
+category = "output"
+
+[[snippet]]
+cmd = "kubectl get pods -A -w"
+desc = "Watch pod state changes live"
+tags = ["watch", "stream", "monitor"]
+category = "output"
+
+[[snippet]]
+cmd = "kubectl wait --for=condition=Ready pod -l app=NAME -n NS --timeout=120s"
+desc = "Block until labelled pods report Ready"
+tags = ["wait", "ready", "ci"]
+category = "output"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS -o wide --no-headers | wc -l"
+desc = "Count how many pods run in a namespace"
+tags = ["count", "pods", "wc"]
+category = "output"
+
+[[snippet]]
+cmd = "kubectl get pods -n NS -o go-template='{{range .items}}{{.metadata.name}}{{\"\\n\"}}{{end}}'"
+desc = "Go template output for custom reporting"
+tags = ["go-template", "format", "report"]
+category = "output"
+
+# ── Cleanup and namespace lifecycle ─────────────────────────────────────────
+
+[[snippet]]
+cmd = "kubectl delete namespace NS --wait=false"
+desc = "Delete a namespace without blocking the terminal"
+tags = ["delete", "namespace", "cleanup"]
+category = "cleanup"
+
+[[snippet]]
+cmd = "kubectl get namespace NS -o json | jq '.spec.finalizers=[]' | kubectl replace --raw /api/v1/namespaces/NS/finalize -f -"
+desc = "Force a namespace stuck in Terminating to finish"
+tags = ["namespace", "stuck", "finalizer", "terminating"]
+category = "cleanup"
+
+[[snippet]]
+cmd = "kubectl get pods -A --field-selector=status.phase=Succeeded -o name | xargs -r kubectl delete"
+desc = "Clean up completed pods across the cluster"
+tags = ["cleanup", "succeeded", "pods"]
+category = "cleanup"
+
+[[snippet]]
+cmd = "kubectl delete pod POD -n NS --grace-period=0 --force"
+desc = "Force-delete a pod wedged in Terminating"
+tags = ["delete", "force", "terminating"]
+category = "cleanup"
+
+[[snippet]]
+cmd = "kubectl get pods -A --field-selector=status.phase=Failed -o name | xargs -r kubectl delete"
+desc = "Delete failed and evicted pods across the cluster"
+tags = ["evicted", "failed", "cleanup"]
+category = "cleanup"

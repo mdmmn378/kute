@@ -1,0 +1,22 @@
+[package]
+name = "kute"
+version = "0.1.0"
+edition = "2024"
+description = "A holistic Kubernetes helper: manifest generation, kustomize scaffolding, RBAC builders and fuzzy kubectl search"
+license = "MIT"
+keywords = ["kubernetes", "kubectl", "kustomize", "cli", "tui"]
+categories = ["command-line-utilities", "development-tools"]
+
+[dependencies]
+anyhow = "1.0.104"
+askama = "0.16.1"
+clap = { version = "4.6.7", features = ["derive"] }
+dirs = "7.0.0"
+fuzzy-matcher = "0.3.7"
+ratatui = "0.30.2"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+toml = "1.1.6"
+
+[dev-dependencies]
+serde_yaml_ng = "0.10.0"

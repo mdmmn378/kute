@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: DaemonSet
+{% include "_meta.yaml" %}
+spec:
+  selector:
+    matchLabels:
+      {{ selector_key }}: "{{ selector_value }}"
+  updateStrategy:
+    type: RollingUpdate
+  template:
+{% include "_podmeta.yaml" %}
+    spec:
+{%- if let Some(sa) = service_account %}
+      serviceAccountName: {{ sa }}
+{%- endif %}
+{% include "_workload_container.yaml" %}
+{%- if !volumes.is_empty() %}
+{% include "_volumes.yaml" %}
+{%- endif %}

@@ -1,0 +1,11 @@
+      volumes:
+{%- for v in volumes %}
+        - name: {{ v.name }}
+{%- if v.kind == "configMap" %}
+          configMap:
+            name: {{ v.source }}
+{%- else %}
+          secret:
+            secretName: {{ v.source }}
+{%- endif %}
+{%- endfor %}

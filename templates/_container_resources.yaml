@@ -1,0 +1,7 @@
+          resources:
+            requests:
+              cpu: "{{ cpu_request }}"
+              memory: "{{ mem_request }}"
+            limits:
+              cpu: "{{ cpu_limit }}"
+              memory: "{{ mem_limit }}"

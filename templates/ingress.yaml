@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+{% include "_meta.yaml" %}
+spec:
+{%- if let Some(c) = ingress_class %}
+  ingressClassName: {{ c }}
+{%- endif %}
+{%- if let Some(t) = tls_secret %}
+  tls:
+    - hosts:
+        - {{ host }}
+      secretName: {{ t }}
+{%- endif %}
+  rules:
+    - host: {{ host }}
+      http:
+        paths:
+          - path: {{ path }}
+            pathType: {{ path_type }}
+            backend:
+              service:
+                name: {{ backend_service }}
+                port:
+                  number: {{ service_port }}

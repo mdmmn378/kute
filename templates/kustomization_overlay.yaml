@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: {{ namespace }}
+
+resources:
+  - ../../base
+
+images:
+  - name: {{ image }}
+    newTag: {{ new_tag }}
+
+replicas:
+  - name: {{ name }}
+    count: {{ replicas }}
+
+configMapGenerator:
+  - name: {{ name }}-config
+    literals:
+      - ENV={{ env }}

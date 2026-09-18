@@ -1,0 +1,3 @@
+[[escaper]]
+extensions = ["yaml"]
+path = "askama::filters::Text"

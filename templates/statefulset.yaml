@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: StatefulSet
+{% include "_meta.yaml" %}
+spec:
+  replicas: {{ replicas }}
+  serviceName: {{ name }}
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      {{ selector_key }}: "{{ selector_value }}"
+  updateStrategy:
+    type: RollingUpdate
+  template:
+{% include "_podmeta.yaml" %}
+    spec:
+{%- if let Some(sa) = service_account %}
+      serviceAccountName: {{ sa }}
+{%- endif %}
+      terminationGracePeriodSeconds: 30
+{% include "_workload_container.yaml" %}
+{%- if !volumes.is_empty() %}
+{% include "_volumes.yaml" %}
+{%- endif %}

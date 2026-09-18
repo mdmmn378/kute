@@ -1,0 +1,6 @@
+          volumeMounts:
+{%- for m in mounts %}
+            - name: {{ m.name }}
+              mountPath: {{ m.mount_path }}
+              readOnly: {{ m.read_only }}
+{%- endfor %}

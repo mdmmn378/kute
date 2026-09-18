@@ -1,0 +1,19 @@
+          env:
+{%- for e in env %}
+            - name: {{ e.name }}
+{%- if let Some(v) = e.value %}
+              value: "{{ v }}"
+{%- endif %}
+{%- if let Some(k) = e.config_map_ref %}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ k }}
+                  key: {{ e.name }}
+{%- endif %}
+{%- if let Some(s) = e.secret_ref %}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ s }}
+                  key: {{ e.name }}
+{%- endif %}
+{%- endfor %}

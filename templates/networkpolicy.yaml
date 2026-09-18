@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+{% include "_meta.yaml" %}
+spec:
+  podSelector:
+    matchLabels:
+      {{ selector_key }}: "{{ selector_value }}"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+{%- if !netpol_ports.is_empty() %}
+      ports:
+{%- for p in netpol_ports %}
+        - protocol: TCP
+          port: {{ p }}
+{%- endfor %}
+{%- endif %}

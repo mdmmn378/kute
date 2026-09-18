@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ kind }}
+{% include "_meta.yaml" %}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: {{ role_ref_kind }}
+  name: {{ role_ref_name }}
+subjects:
+{%- for s in subjects %}
+  - kind: {{ s.kind }}
+    name: {{ s.name }}
+{%- if let Some(ns) = s.namespace %}
+    namespace: {{ ns }}
+{%- endif %}
+{%- endfor %}

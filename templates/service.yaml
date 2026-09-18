@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+{% include "_meta.yaml" %}
+spec:
+  type: {{ service_type }}
+  selector:
+    {{ selector_key }}: "{{ selector_value }}"
+  ports:
+    - name: {{ port_name }}
+      protocol: TCP
+      port: {{ service_port }}
+      targetPort: {{ target_port }}

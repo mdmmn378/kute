@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: CronJob
+{% include "_meta.yaml" %}
+spec:
+  schedule: "{{ schedule }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+{%- if suspend %}
+  suspend: true
+{%- endif %}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ backoff_limit }}
+      template:
+        metadata:
+          labels:
+            {{ selector_key }}: "{{ selector_value }}"
+        spec:
+          restartPolicy: {{ restart_policy }}
+{%- if let Some(sa) = service_account %}
+          serviceAccountName: {{ sa }}
+{%- endif %}
+          containers:
+            - name: {{ container_name }}
+              image: {{ image }}
+              imagePullPolicy: {{ image_pull_policy }}
+{%- if !command.is_empty() %}
+              command:
+{%- for c in command %}
+                - "{{ c }}"
+{%- endfor %}
+{%- endif %}
+{%- if !env.is_empty() %}
+              env:
+{%- for e in env %}
+                - name: {{ e.name }}
+{%- if let Some(v) = e.value %}
+                  value: "{{ v }}"
+{%- endif %}
+{%- if let Some(k) = e.config_map_ref %}
+                  valueFrom:
+                    configMapKeyRef:
+                      name: {{ k }}
+                      key: {{ e.name }}
+{%- endif %}
+{%- if let Some(s) = e.secret_ref %}
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ s }}
+                      key: {{ e.name }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+              resources:
+                requests:
+                  cpu: "{{ cpu_request }}"
+                  memory: "{{ mem_request }}"
+                limits:
+                  cpu: "{{ cpu_limit }}"
+                  memory: "{{ mem_limit }}"

@@ -1,0 +1,17 @@
+metadata:
+  name: {{ name }}
+{%- if let Some(ns) = namespace %}
+  namespace: {{ ns }}
+{%- endif %}
+{%- if !labels.is_empty() %}
+  labels:
+{%- for l in labels %}
+    {{ l.key }}: "{{ l.value }}"
+{%- endfor %}
+{%- endif %}
+{%- if !annotations.is_empty() %}
+  annotations:
+{%- for a in annotations %}
+    {{ a.key }}: "{{ a.value }}"
+{%- endfor %}
+{%- endif %}

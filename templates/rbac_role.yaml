@@ -1,0 +1,24 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ kind }}
+{% include "_meta.yaml" %}
+rules:
+{%- for r in rules %}
+  - apiGroups:
+{%- for g in r.api_groups %}
+      - "{{ g }}"
+{%- endfor %}
+    resources:
+{%- for res in r.resources %}
+      - "{{ res }}"
+{%- endfor %}
+{%- if !r.resource_names.is_empty() %}
+    resourceNames:
+{%- for rn in r.resource_names %}
+      - "{{ rn }}"
+{%- endfor %}
+{%- endif %}
+    verbs:
+{%- for v in r.verbs %}
+      - "{{ v }}"
+{%- endfor %}
+{%- endfor %}
